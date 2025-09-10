@@ -3,10 +3,11 @@
 // Santiago Tamez Gomez - A01723018
 // Bruno Rivera Juárez - A01571663
 // Fecha: 7 de septiembre de 2025
-
+#include <algorithm>
 #include <fstream>
 #include <vector>
 #include <filesystem>
+#include <sstream>
 #include "BusquedaDeSubsecuencias.h"
 #include "Palindromo.h"
 #include "arbolHuffman.h"
@@ -96,34 +97,46 @@ Espacio: O(n * m) espacio adicional para la matriz dp.
 */
 
 void substringComunMasLargo(const std::string& s1, const std::string& s2) {
-    int n = s1.size(), m = s2.size();
-    int maxLen = 0, endPos = 0;
+    // Divide ambos strings en substrings usando espacios
+    std::vector<std::string> subs1, subs2;
+    std::vector<int> pos1; // Guarda la posición inicial de cada substring en s1
 
-    // dp[i][j] almacena la longitud del substring común más largo que termina en s1[i-1] y s2[j-1]
-    std::vector<std::vector<int>> dp(n+1, std::vector<int>(m+1, 0));
+    // Para s1
+    int idx = 0;
+    std::istringstream iss1(s1);
+    std::string token;
+    while (iss1 >> token) {
+        // Encuentra la posición en el string original
+        size_t found = s1.find(token, idx);
+        subs1.push_back(token);
+        pos1.push_back((int)found);
+        idx = (int)found + (int)token.size();
+    }
 
-    // Recorre ambos strings para llenar la matriz dp
-    for (int i = 1; i <= n; ++i) {
-        for (int j = 1; j <= m; ++j) {
-            // Si los caracteres coinciden, extiende el substring común
-            if (s1[i-1] == s2[j-1]) {
-                dp[i][j] = dp[i-1][j-1] + 1;
-                // Actualiza la longitud máxima y la posición final si es el substring más largo encontrado
-                if (dp[i][j] > maxLen) {
-                    maxLen = dp[i][j];
-                    endPos = i - 1;
-                }
+    // Para s2
+    std::istringstream iss2(s2);
+    while (iss2 >> token) {
+        subs2.push_back(token);
+    }
+
+    // Busca el substring común más largo
+    int maxLen = 0, idx1 = -1;
+    for (int i = 0; i < subs1.size(); ++i) {
+        for (int j = 0; j < subs2.size(); ++j) {
+            if (subs1[i] == subs2[j] && subs1[i].size() > maxLen) {
+                maxLen = subs1[i].size();
+                idx1 = i;
             }
         }
     }
 
-    // Si se encontró un substring común, muestra posiciones y el substring
-    if (maxLen > 0) {
-        int startPos = endPos - maxLen + 1;
+    if (idx1 != -1) {
+        int startPos = pos1[idx1];
+        int endPos = startPos + maxLen - 1;
         std::cout << "\nParte 3: substring comun mas largo\n";
         std::cout << "Posicion inicial: " << startPos << "\n";
         std::cout << "Posicion final: " << endPos << "\n";
-        std::cout << "Substring: " << s1.substr(startPos, maxLen) << "\n";
+        std::cout << "Substring: " << subs1[idx1] << "\n";
     } else {
         std::cout << "\nParte 3: No hay substring comun\n";
     }
