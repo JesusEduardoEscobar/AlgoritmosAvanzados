@@ -1,0 +1,12 @@
+Santiago Tamez - A01723018
+Realizo:
+    - Parte 3 - Substring común más largo
+    
+Jesus Eduardo Escobar Meza - A01743270
+Realizo:
+    - Parte 1 – Búsqueda de subsecuencias
+    - Parte 2 – Búsqueda de palíndromos 
+
+Bruno Rivera Juárez - A01571663
+Realizo:
+    - Parte 4 - Huffman Coding
