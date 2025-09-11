@@ -74,22 +74,6 @@ std::string palindromoMasLargo(const std::string& texto) {
 }
 
 /*
-Lee el contenido de los archivos transmission y mcode
-y los devuelve como strings.
-*/
-
-std::string leerArchivo(const std::string& nombreArchivo) {
-    std::ifstream archivo(nombreArchivo);
-    if (!archivo.is_open()) {
-        std::cerr << "No se pudo abrir el archivo: " << nombreArchivo << std::endl;
-        return "";
-    }
-    std::string contenido((std::istreambuf_iterator<char>(archivo)), std::istreambuf_iterator<char>());
-    archivo.close();
-    return contenido;
-}
-
-/*
 Encuentra el substring común más largo entre dos strings.
 Complejidades:
 Tiempo: O(n * m) donde n y m son los tamaños de los strings.
@@ -97,46 +81,42 @@ Espacio: O(n * m) espacio adicional para la matriz dp.
 */
 
 void substringComunMasLargo(const std::string& s1, const std::string& s2) {
-    // Divide ambos strings en substrings usando espacios
-    std::vector<std::string> subs1, subs2;
-    std::vector<int> pos1; // Guarda la posición inicial de cada substring en s1
+    int n = s1.size();
+    int m = s2.size();
 
-    // Para s1
-    int idx = 0;
-    std::istringstream iss1(s1);
-    std::string token;
-    while (iss1 >> token) {
-        // Encuentra la posición en el string original
-        size_t found = s1.find(token, idx);
-        subs1.push_back(token);
-        pos1.push_back((int)found);
-        idx = (int)found + (int)token.size();
-    }
+    // dp[i][j] = longitud del substring común que termina en s1[i-1] y s2[j-1]
+    std::vector<std::vector<int>> dp(n + 1, std::vector<int>(m + 1, 0));
 
-    // Para s2
-    std::istringstream iss2(s2);
-    while (iss2 >> token) {
-        subs2.push_back(token);
-    }
+    int maxLen = 0;     // longitud máxima encontrada
+    int endPos = 0;     // posición donde termina en s1
 
-    // Busca el substring común más largo
-    int maxLen = 0, idx1 = -1;
-    for (int i = 0; i < subs1.size(); ++i) {
-        for (int j = 0; j < subs2.size(); ++j) {
-            if (subs1[i] == subs2[j] && subs1[i].size() > maxLen) {
-                maxLen = subs1[i].size();
-                idx1 = i;
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= m; ++j) {
+            if (s1[i - 1] == s2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+                if (dp[i][j] > maxLen) {
+                    maxLen = dp[i][j];
+                    endPos = i; // guardar donde termina en s1
+                }
             }
         }
     }
 
-    if (idx1 != -1) {
-        int startPos = pos1[idx1];
-        int endPos = startPos + maxLen - 1;
+    if (maxLen > 0) {
+        std::string substring = s1.substr(endPos - maxLen, maxLen);
+
+        // Si el substring tiene espacios, lo dividimos y tomamos el más largo
+        if (substring.find(' ') != std::string::npos) {
+            std::istringstream iss(substring);
+            std::string token, longest;
+            while (iss >> token) {
+                if (token.size() > longest.size()) longest = token;
+            }
+            substring = longest;
+        }
+
         std::cout << "\nParte 3: substring comun mas largo\n";
-        std::cout << "Posicion inicial: " << startPos << "\n";
-        std::cout << "Posicion final: " << endPos << "\n";
-        std::cout << "Substring: " << subs1[idx1] << "\n";
+        std::cout << "Substring: " << substring << "\n";
     } else {
         std::cout << "\nParte 3: No hay substring comun\n";
     }
@@ -149,6 +129,15 @@ y la codificación de mensajes. Complejidades:
 Tiempo: O(n log n) donde n es el número de caracteres únicos.
 Espacio: O(n) espacio adicional para la tabla de códigos y el árbol.
 */
+
+// Comparador para la cola de prioridad
+class Compare {
+public:
+    // Nodo con menor frecuencia tiene mayor prioridad
+    bool operator() (Node* a, Node* b) {
+        return a->freq > b->freq;
+    }
+};
 
 // Generar códigos a partir del árbol
 void generarCodigos(Node* root, std::unordered_map<char, std::string>& codes, std::string curr) {
@@ -220,16 +209,10 @@ void huffmanCoding(const std::vector<std::string>& transmissions, const std::vec
 
         // Elimina espacios de la transmisión antes de construir Huffman
         std::string transmissionSinEspacios = transmissions[i];
-        std::string mcodeSinEspacios = mcodes[i];
         
         transmissionSinEspacios.erase(
             std::remove(transmissionSinEspacios.begin(), transmissionSinEspacios.end(), ' '),
             transmissionSinEspacios.end()
-        );
-
-        mcodeSinEspacios.erase(
-            std::remove(mcodeSinEspacios.begin(), mcodeSinEspacios.end(), ' '),
-            mcodeSinEspacios.end()
         );
 
         double Lprom;
@@ -241,6 +224,14 @@ void huffmanCoding(const std::vector<std::string>& transmissions, const std::vec
              << " bits, Tamano real: " << tamanoReal << " bits\n";
 
         for (int j = 0; j < mcodes.size(); j++) {
+            
+            std::string mcodeSinEspacios = mcodes[j];
+            
+            mcodeSinEspacios.erase(
+                std::remove(mcodeSinEspacios.begin(), mcodeSinEspacios.end(), ' '),
+                mcodeSinEspacios.end()
+            );
+
             int Lmsg = codificarLongitud(mcodes[j], tabla);
             double esperadoMsg = mcodes[j].size() * Lprom;
   
@@ -254,6 +245,23 @@ void huffmanCoding(const std::vector<std::string>& transmissions, const std::vec
         }
     }
 }
+
+/*
+Lee el contenido de los archivos transmission y mcode
+y los devuelve como strings.
+*/
+
+std::string leerArchivo(const std::string& nombreArchivo) {
+    std::ifstream archivo(nombreArchivo);
+    if (!archivo.is_open()) {
+        std::cerr << "No se pudo abrir el archivo: " << nombreArchivo << std::endl;
+        return "";
+    }
+    std::string contenido((std::istreambuf_iterator<char>(archivo)), std::istreambuf_iterator<char>());
+    archivo.close();
+    return contenido;
+}
+
 
 int main() {
     std::vector<std::string> transmissions = {
